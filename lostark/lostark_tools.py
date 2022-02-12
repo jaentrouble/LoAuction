@@ -78,7 +78,8 @@ def refresh_login(driver):
 
 def datum_parser(datum:list):
     timestamp, _, price, info = datum
-    parsed = timestamp
+    parsed = []
+    parsed += timestamp
     name = info['Element_000']['value'].split('<')[-3].split('>')[-1]
     grade = info['Element_001']['value']['slotData']['iconGrade']
     acc_type = info['Element_001']['value']['leftStr0'].split('<')[-3].split('>')[-1].split(' ')[1]
