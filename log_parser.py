@@ -1,17 +1,37 @@
 import json
 from pathlib import Path
 from lostark.lostark_tools import datum_parser
+import tqdm
 
 LOGDIR = 'accessory_logs'
 
-
 log_dir = Path(LOGDIR)
+all_names = list(log_dir.iterdir())
+total_logs = {
+    '팔찌' : [],
+    '귀걸이' : [],
+    '반지' : [],
+    '목걸이' : [],
+}
 
-total_logs = []
-
-for logpath in log_dir.iterdir():
+for logpath in tqdm.tqdm(all_names):
     with open(logpath, 'r') as f:
         raw_log = json.load(f)
-    no_copies = []
-    for r in raw_log:
-        
+    no_copies = [raw_log[0]]
+    for r in raw_log[1:]:
+        duplicated = False
+        for nc in no_copies:
+            if r[0]==nc[0] and r[3]==nc[3]:
+                duplicated=True
+                break
+        if not duplicated:
+            no_copies.append(r)
+    for nc in no_copies:
+        parsed = datum_parser(nc)
+        total_logs[parsed['acc_type']].append(parsed)
+
+output_name = '_'.join([str(i) for i in raw_log[0][0]])
+
+for a_t, l in total_logs.items():
+    with open(output_name+a_t+'.json','w') as f:
+        json.dump(l,f)

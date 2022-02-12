@@ -78,8 +78,13 @@ def refresh_login(driver):
 
 def datum_parser(datum:list):
     timestamp, _, price, info = datum
-    parsed = []
-    parsed += timestamp
+    parsed = {}
+    parsed['year'] = timestamp[0]
+    parsed['month'] = timestamp[1]
+    parsed['day'] = timestamp[2]
+    parsed['hour'] = timestamp[3]
+    parsed['min'] = timestamp[4]
+    parsed['sec'] = timestamp[5]
     name = info['Element_000']['value'].split('<')[-3].split('>')[-1]
     grade = info['Element_001']['value']['slotData']['iconGrade']
     acc_type = info['Element_001']['value']['leftStr0'].split('<')[-3].split('>')[-1].split(' ')[1]
@@ -87,7 +92,13 @@ def datum_parser(datum:list):
     quality = info['Element_001']['value']['qualityValue']
     trade = int(info['Element_003']['value'].split('<')[3][-1])
 
-    parsed += [price,name,grade,acc_type,tier,quality,trade]
+    parsed['price'] = price
+    parsed['name'] = name
+    parsed['grade'] = grade
+    parsed['acc_type'] = acc_type
+    parsed['tier'] = tier
+    parsed['quality'] = quality
+    parsed['trade'] = trade
 
     if acc_type == '목걸이':
         #특성
@@ -95,41 +106,54 @@ def datum_parser(datum:list):
         e_1_val = int(info['Element_007']['value']['Element_001'].split('<BR>')[0].split('+')[1])
         e_2_name = info['Element_007']['value']['Element_001'].split('<BR>')[1].split(' +')[0]
         e_2_val = int(info['Element_007']['value']['Element_001'].split('<BR>')[1].split('+')[1])
-        parsed += [e_1_name,e_1_val,e_2_name,e_2_val]
+        parsed['e_1_name'] = e_1_name
+        parsed['e_1_val'] = e_1_val
+        parsed['e_2_name'] = e_2_name
+        parsed['e_2_val'] = e_2_val
         #각인
         en_strs = info['Element_008']['value']['Element_001'].split('<BR>')
-        for s in en_strs:
+        for i, s in enumerate(en_strs):
             en_name = s.split('</FONT>')[0].split('>')[1]
             en_val = int(s.split('+')[-1])
-            parsed += [en_name, en_val]
+            parsed[f'en_{i+1}_name'] = en_name
+            parsed[f'en_{i+1}_val'] = en_val
 
     elif acc_type == '팔찌':
         op_str = info['Element_006']['value']['Element_001']
         unlocked = op_str.count('changeable')
+        i = 0 #manual because of '속공' option
         for s in op_str.split('<BR>'):
             if s.count('changeable'):
                 pass
             elif s.count('['):
                 name = s.split('[')[1].split(']')[0].replace("<FONT COLOR='#f9f7d0'>",'').replace('</FONT>','')
                 spec = s.split(']')[1]
-                parsed += [name,spec]
+                parsed[f'option_{i+1}_name'] = name
+                parsed[f'option_{i+1}_spec'] = spec
+                i += 1
 
             elif s.count('+'):
                 name = s.split(' +')[0].split('</img> ')[1]
                 spec = int(s.split('+')[1])
-                parsed += [name,spec]
+                parsed[f'option_{i+1}_name'] = name
+                parsed[f'option_{i+1}_spec'] = spec
+                i += 1
+            elif s.count('속공'):
+                pass
             else:
                 raise Exception(f'unhandled wrist option:{s}')
-        parsed += ['부여',unlocked]
+        parsed['changeable_options'] = unlocked
     elif acc_type in ['귀걸이','반지']:
         # 특성
         e_name, e_val = info['Element_007']['value']['Element_001'].split(' +')
         e_val = int(e_val)
-        parsed += [e_name, e_val]
+        parsed['e_name'] = e_name
+        parsed['e_val'] = e_val
         #각인
         en_strs = info['Element_008']['value']['Element_001'].split('<BR>')
-        for s in en_strs:
+        for i, s in enumerate(en_strs):
             en_name = s.split('</FONT>')[0].split('>')[1]
             en_val = int(s.split('+')[-1])
-            parsed += [en_name, en_val]
+            parsed[f'en_{i+1}_name'] = en_name
+            parsed[f'en_{i+1}_val'] = en_val
     return parsed
